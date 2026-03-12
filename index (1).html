@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GreenMind — AI Green Computing Dashboard</title>
+  <meta name="description" content="AI-powered green computing dashboard for sustainable software development" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES — ECO-MODERNIST PALETTE
+    ═══════════════════════════════════════════════════ */
+    :root {
+      --forest-deep:    #0d1f12;
+      --forest-dark:    #132a1a;
+      --forest-mid:     #1e4028;
+      --forest-bright:  #2d6a3f;
+      --moss:           #4a8c5c;
+      --sage:           #7ab48a;
+      --mint:           #a8d5b5;
+      --frost:          #d4edda;
+      --slate-dark:     #1c2b24;
+      --slate-mid:      #2e3d35;
+      --slate-light:    #4a5e52;
+      --white:          #f4f9f6;
+      --white-dim:      rgba(244, 249, 246, 0.85);
+      --white-faint:    rgba(244, 249, 246, 0.12);
+      --white-ghost:    rgba(244, 249, 246, 0.06);
+      --accent-lime:    #8fce6a;
+      --accent-teal:    #3ecfad;
+      --accent-amber:   #e8c56a;
+      --accent-red:     #e86a6a;
+      --glass-bg:       rgba(30, 64, 40, 0.45);
+      --glass-border:   rgba(168, 213, 181, 0.18);
+      --glass-shadow:   0 8px 32px rgba(0, 0, 0, 0.35);
+      --glow-green:     0 0 40px rgba(143, 206, 106, 0.15);
+      --radius-sm:      8px;
+      --radius-md:      16px;
+      --radius-lg:      24px;
+      --radius-xl:      36px;
+      --transition:     all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      --font-display:   'Syne', sans-serif;
+      --font-serif:     'Instrument Serif', serif;
+      --font-mono:      'DM Mono', monospace;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       ECO MODE OVERRIDES
+    ═══════════════════════════════════════════════════ */
+    body.eco-mode * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.1ms !important;
+    }
+    body.eco-mode .particle { display: none !important; }
+    body.eco-mode .bg-grid { opacity: 0.03 !important; }
+    body.eco-mode img, body.eco-mode .hero-visual {
+      filter: grayscale(60%) blur(0px) !important;
+      image-rendering: pixelated;
+    }
+    body.eco-mode .card-glow { box-shadow: none !important; }
+
+    /* ═══════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: var(--font-display);
+      background-color: var(--forest-deep);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BACKGROUND LAYER
+    ═══════════════════════════════════════════════════ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* Gradient mesh background */
+    .bg-layer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(45, 106, 63, 0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 85% 30%, rgba(62, 207, 173, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 50% at 50% 90%, rgba(19, 42, 26, 0.8) 0%, transparent 70%),
+        linear-gradient(160deg, var(--forest-deep) 0%, var(--forest-dark) 40%, var(--slate-dark) 100%);
+    }
+
+    /* Subtle grid texture */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.06;
+      background-image:
+        linear-gradient(var(--sage) 1px, transparent 1px),
+        linear-gradient(90deg, var(--sage) 1px, transparent 1px);
+      background-size: 48px 48px;
+      transition: opacity 0.5s;
+    }
+
+    /* Floating particles */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float-particle linear infinite;
+      opacity: 0;
+    }
+
+    @keyframes float-particle {
+      0%   { transform: translateY(100vh) translateX(0) scale(0); opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.3; }
+      100% { transform: translateY(-10vh) translateX(40px) scale(1.2); opacity: 0; }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       LAYOUT WRAPPER
+    ═══════════════════════════════════════════════════ */
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════════════════ */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(13, 31, 18, 0.7);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--moss), var(--accent-lime));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(143, 206, 106, 0.3);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(143, 206, 106, 0.3); }
+      50%       { box-shadow: 0 0 35px rgba(143, 206, 106, 0.55); }
+    }
+
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--white);
+    }
+
+    .logo-text span { color: var(--accent-lime); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--sage);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover { color: var(--accent-lime); }
+
+    /* Eco Mode Toggle in Nav */
+    .eco-toggle-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--sage);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--slate-mid);
+      border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: var(--sage);
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    input:checked ~ .toggle-track { background: var(--forest-bright); border-color: var(--accent-lime); }
+    input:checked ~ .toggle-track .toggle-thumb {
+      transform: translateX(22px);
+      background: var(--accent-lime);
+      box-shadow: 0 0 10px rgba(143, 206, 106, 0.6);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       HERO SECTION
+    ═══════════════════════════════════════════════════ */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      margin-bottom: 80px;
+      padding: 48px 0 32px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white-ghost);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent-lime);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-lime);
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 4vw, 3.8rem);
+      line-height: 1.1;
+      font-style: italic;
+      color: var(--white);
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-title strong {
+      font-style: normal;
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: var(--accent-lime);
+      display: block;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+      color: var(--sage);
+      max-width: 440px;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+    }
+
+    .stat-item { text-align: left; }
+
+    .stat-num {
+      font-family: var(--font-mono);
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: var(--accent-lime);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--slate-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    /* Hero Visual — animated ring chart */
+    .hero-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+    }
+
+    .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+    .ring-track {
+      fill: none;
+      stroke: var(--slate-mid);
+      stroke-width: 12;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 691;
+      stroke-dashoffset: 173; /* ~75% */
+      animation: ring-draw 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      filter: drop-shadow(0 0 8px rgba(143, 206, 106, 0.5));
+    }
+
+    @keyframes ring-draw {
+      from { stroke-dashoffset: 691; }
+      to   { stroke-dashoffset: 173; }
+    }
+
+    .ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .ring-pct {
+      font-family: var(--font-mono);
+      font-size: 2.8rem;
+      font-weight: 500;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .ring-label {
+      font-size: 0.72rem;
+      color: var(--sage);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 6px;
+    }
+
+    /* Orbiting dots */
+    .orbit {
+      position: absolute;
+      inset: -24px;
+      border-radius: 50%;
+      animation: spin-orbit 8s linear infinite;
+    }
+
+    .orbit-dot {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      background: var(--accent-lime);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent-lime);
+    }
+
+    @keyframes spin-orbit { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════════════
+       GLASSMORPHISM CARD BASE
+    ═══════════════════════════════════════════════════ */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(168, 213, 181, 0.4), transparent);
+    }
+
+    .card-glow:hover {
+      border-color: rgba(143, 206, 106, 0.3);
+      box-shadow: var(--glow-green), var(--glass-shadow);
+      transform: translateY(-2px);
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-lime);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 18px;
+      height: 2px;
+      background: var(--accent-lime);
+      border-radius: 2px;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       MAIN DASHBOARD GRID
+    ═══════════════════════════════════════════════════ */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .col-7 { grid-column: span 7; }
+    .col-5 { grid-column: span 5; }
+    .col-8 { grid-column: span 8; }
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-12 { grid-column: span 12; }
+
+    /* ═══════════════════════════════════════════════════
+       AI CARBON ANALYZER
+    ═══════════════════════════════════════════════════ */
+    .analyzer-textarea {
+      width: 100%;
+      min-height: 160px;
+      background: var(--white-ghost);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--mint);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      padding: 16px;
+      resize: vertical;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .analyzer-textarea::placeholder { color: var(--slate-light); font-style: italic; }
+    .analyzer-textarea:focus { border-color: var(--accent-lime); background: rgba(244, 249, 246, 0.08); }
+
+    .analyze-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--forest-bright), var(--moss));
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--white);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .analyze-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .analyze-btn:hover::after { opacity: 1; }
+    .analyze-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(45, 106, 63, 0.4); }
+    .analyze-btn:active { transform: translateY(0); }
+
+    .btn-icon { font-size: 1rem; }
+
+    /* Carbon Score Display */
+    .score-display {
+      display: none;
+      margin-top: 20px;
+      animation: slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .score-display.visible { display: block; }
+
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .score-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .score-label { font-size: 0.75rem; color: var(--sage); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .score-value {
+      font-family: var(--font-mono);
+      font-size: 2.2rem;
+      font-weight: 500;
+    }
+
+    .score-bar-track {
+      height: 8px;
+      background: var(--slate-mid);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+    }
+
+    .suggestions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .suggestion-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: var(--white-ghost);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--white-dim);
+      animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .suggestion-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ═══════════════════════════════════════════════════
+       LIVE ENERGY MONITOR
+    ═══════════════════════════════════════════════════ */
+    .energy-monitor { padding: 28px; }
+
+    .monitor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent-lime);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-lime);
+      border-radius: 50%;
+      animation: blink 1s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--accent-lime);
+    }
+
+    /* Chart canvas */
+    .chart-wrapper {
+      position: relative;
+      height: 180px;
+      width: 100%;
+    }
+
+    canvas#energyChart {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Mini metric tiles */
+    .metric-tiles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .metric-tile {
+      background: var(--white-ghost);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    .metric-num {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .metric-unit {
+      font-size: 0.65rem;
+      color: var(--slate-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       ECO MODE PANEL
+    ═══════════════════════════════════════════════════ */
+    .eco-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .eco-desc {
+      font-size: 0.85rem;
+      color: var(--sage);
+      line-height: 1.6;
+    }
+
+    .eco-feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .eco-feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--white-dim);
+    }
+
+    .eco-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--white-ghost);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    body.eco-mode .eco-check {
+      background: rgba(143, 206, 106, 0.2);
+      border-color: var(--accent-lime);
+      color: var(--accent-lime);
+    }
+
+    .savings-counter {
+      background: linear-gradient(135deg, rgba(143, 206, 106, 0.12), rgba(62, 207, 173, 0.08));
+      border: 1px solid rgba(143, 206, 106, 0.25);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    .savings-num {
+      font-family: var(--font-mono);
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: var(--accent-lime);
+    }
+
+    .savings-label {
+      font-size: 0.7rem;
+      color: var(--sage);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       SUSTAINABILITY TIPS CAROUSEL
+    ═══════════════════════════════════════════════════ */
+    .carousel-section { padding: 28px; }
+
+    .carousel-track-wrapper { overflow: hidden; position: relative; border-radius: var(--radius-md); }
+
+    .carousel-track {
+      display: flex;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tip-slide {
+      min-width: 100%;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, var(--white-ghost), rgba(62, 207, 173, 0.05));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+    }
+
+    .tip-category {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-teal);
+      margin-bottom: 10px;
+    }
+
+    .tip-headline {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-style: italic;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .tip-body {
+      font-size: 0.85rem;
+      color: var(--sage);
+      line-height: 1.7;
+      max-width: 680px;
+    }
+
+    .tip-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 0.72rem;
+      color: var(--slate-light);
+      font-family: var(--font-mono);
+    }
+
+    .carousel-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .carousel-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .carousel-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--slate-light);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      padding: 0;
+    }
+
+    .carousel-dot.active {
+      width: 24px;
+      background: var(--accent-lime);
+    }
+
+    .carousel-arrows {
+      display: flex;
+      gap: 10px;
+    }
+
+    .carousel-arrow {
+      width: 36px;
+      height: 36px;
+      background: var(--white-ghost);
+      border: 1px solid var(--glass-border);
+      border-radius: 50%;
+      color: var(--white);
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .carousel-arrow:hover {
+      background: var(--forest-bright);
+      border-color: var(--accent-lime);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BOTTOM ROW — STATUS & QUICK ACTIONS
+    ═══════════════════════════════════════════════════ */
+    .status-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .status-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: var(--transition);
+    }
+
+    .status-card:hover {
+      border-color: rgba(143, 206, 106, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .status-icon {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .status-val {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 500;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .status-name {
+      font-size: 0.72rem;
+      color: var(--slate-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .status-trend {
+      font-size: 0.7rem;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trend-up { color: var(--accent-red); }
+    .trend-dn { color: var(--accent-lime); }
+    .trend-nt { color: var(--sage); }
+
+    /* ═══════════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════════ */
+    footer {
+      margin-top: 64px;
+      padding-top: 32px;
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--slate-light);
+    }
+
+    footer a { color: var(--sage); text-decoration: none; }
+    footer a:hover { color: var(--accent-lime); }
+
+    /* ═══════════════════════════════════════════════════
+       LOADING SPINNER
+    ═══════════════════════════════════════════════════ */
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: var(--white);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .spinner.visible { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════════════
+       COLOR CODING FOR SCORES
+    ═══════════════════════════════════════════════════ */
+    .score-excellent { color: var(--accent-lime); }
+    .score-good      { color: var(--accent-teal); }
+    .score-warn      { color: var(--accent-amber); }
+    .score-bad       { color: var(--accent-red); }
+
+    .bar-excellent { background: linear-gradient(90deg, var(--forest-bright), var(--accent-lime)); }
+    .bar-good      { background: linear-gradient(90deg, #2a8a7e, var(--accent-teal)); }
+    .bar-warn      { background: linear-gradient(90deg, #9a7f2a, var(--accent-amber)); }
+    .bar-bad       { background: linear-gradient(90deg, #9a2a2a, var(--accent-red)); }
+
+    /* ═══════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .col-7, .col-5, .col-8, .col-4 { grid-column: span 12; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      nav { gap: 16px; }
+      .nav-links { display: none; }
+      .status-row { grid-template-columns: repeat(2, 1fr); }
+      .metric-tiles { grid-template-columns: repeat(3, 1fr); }
+      .app-wrapper { padding: 0 16px 60px; }
+    }
+
+    @media (max-width: 480px) {
+      .status-row { grid-template-columns: 1fr 1fr; }
+      .hero-stats { flex-wrap: wrap; gap: 20px; }
+      .metric-tiles { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       ACCESSIBILITY
+    ═══════════════════════════════════════════════════ */
+    :focus-visible {
+      outline: 2px solid var(--accent-lime);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Layer -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-grid"></div>
+    <!-- Particles injected by JS -->
+  </div>
+
+  <div class="app-wrapper">
+
+    <!-- ══════════ NAVIGATION ══════════ -->
+    <nav role="navigation" aria-label="Main navigation">
+      <a href="#" class="nav-logo" aria-label="GreenMind Home">
+        <div class="logo-icon" aria-hidden="true">🌿</div>
+        <span class="logo-text">Green<span>Mind</span></span>
+      </a>
+
+      <ul class="nav-links" role="list">
+        <li><a href="#analyzer">Analyzer</a></li>
+        <li><a href="#monitor">Monitor</a></li>
+        <li><a href="#tips">Tips</a></li>
+      </ul>
+
+      <label class="eco-toggle-nav" for="ecoToggleMain" aria-label="Toggle Eco Mode">
+        <span>Eco Mode</span>
+        <div class="toggle-switch">
+          <input type="checkbox" id="ecoToggleMain" role="switch" aria-checked="false" />
+          <div class="toggle-track">
+            <div class="toggle-thumb"></div>
+          </div>
+        </div>
+      </label>
+    </nav>
+
+    <!-- ══════════ HERO ══════════ -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-content">
+        <div class="hero-badge" aria-label="System status: AI active">
+          <span class="badge-dot" aria-hidden="true"></span>
+          AI-Powered · Real-Time Analysis
+        </div>
+
+        <h1 class="hero-title" id="hero-heading">
+          Build software that<br />
+          <strong>respects the planet.</strong>
+        </h1>
+
+        <p class="hero-subtitle">
+          GreenMind analyzes your code's carbon footprint, monitors data center efficiency,
+          and delivers AI-driven optimizations for a sustainable digital future.
+        </p>
+
+        <div class="hero-stats" role="list" aria-label="Platform statistics">
+          <div class="stat-item" role="listitem">
+            <div class="stat-num" id="heroStatAnalyses">0</div>
+            <div class="stat-label">Analyses run</div>
+          </div>
+          <div class="stat-item" role="listitem">
+            <div class="stat-num">4.7t</div>
+            <div class="stat-label">CO₂ saved</div>
+          </div>
+          <div class="stat-item" role="listitem">
+            <div class="stat-num">98%</div>
+            <div class="stat-label">Uptime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated Ring Visual -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="ring-container">
+          <div class="orbit">
+            <div class="orbit-dot"></div>
+          </div>
+          <svg class="ring-svg" viewBox="0 0 220 220" role="img" aria-label="75% global efficiency">
+            <circle class="ring-track" cx="110" cy="110" r="90" />
+            <circle class="ring-fill" cx="110" cy="110" r="90"
+              stroke="url(#ringGrad)" />
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4a8c5c" />
+                <stop offset="100%" stop-color="#8fce6a" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="ring-inner">
+            <span class="ring-pct">75%</span>
+            <span class="ring-label">Global<br/>Efficiency</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════ DASHBOARD GRID ══════════ -->
+    <main id="main-content">
+
+      <!-- ROW 1: Carbon Analyzer + Energy Monitor -->
+      <div class="dashboard-grid">
+
+        <!-- AI Carbon Analyzer -->
+        <section class="glass-card card-glow col-7" id="analyzer" aria-labelledby="analyzer-heading">
+          <div class="section-label">AI Carbon Analyzer</div>
+          <h2 class="card-title" id="analyzer-heading">Paste Your Code — Get a Carbon Score</h2>
+
+          <label for="codeInput" class="sr-only">Paste your code here for carbon analysis</label>
+          <textarea
+            class="analyzer-textarea"
+            id="codeInput"
+            placeholder="// Paste any code snippet here...&#10;// GreenMind's AI will assess its carbon footprint&#10;// and suggest green optimizations."
+            rows="8"
+            aria-describedby="analyzer-help"
+          ></textarea>
+          <span id="analyzer-help" class="sr-only">Enter code to receive a carbon efficiency score from 0 to 100 and AI suggestions</span>
+
+          <div style="display:flex; align-items:center; gap:12px;">
+            <button class="analyze-btn" id="analyzeBtn" aria-busy="false">
+              <span class="btn-icon" aria-hidden="true">⚡</span>
+              <span id="analyzeBtnText">Analyze Carbon Impact</span>
+              <div class="spinner" id="analyzeSpinner" aria-hidden="true"></div>
+            </button>
+            <button
+              class="analyze-btn"
+              id="clearBtn"
+              style="background: var(--slate-mid); box-shadow:none;"
+              aria-label="Clear analysis"
+            >Clear</button>
+          </div>
+
+          <!-- Score Result -->
+          <div class="score-display" id="scoreDisplay" aria-live="polite" aria-atomic="true">
+            <div class="score-header">
+              <div>
+                <div class="score-label">Carbon Efficiency Score</div>
+                <div class="score-value" id="scoreValue">—</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="score-label">Grade</div>
+                <div class="score-value" id="scoreGrade" style="font-size:1.4rem;">—</div>
+              </div>
+            </div>
+            <div class="score-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="scoreBarTrack">
+              <div class="score-bar-fill" id="scoreBar"></div>
+            </div>
+            <div class="suggestions-list" id="suggestionsList" aria-label="Optimization suggestions"></div>
+          </div>
+        </section>
+
+        <!-- Live Energy Monitor -->
+        <section class="glass-card card-glow col-5" id="monitor" aria-labelledby="monitor-heading">
+          <div class="energy-monitor" style="padding:0;">
+            <div class="monitor-header">
+              <div>
+                <div class="section-label">Live Monitor</div>
+                <h2 class="card-title" id="monitor-heading" style="margin-bottom:0;">Data Center Efficiency</h2>
+              </div>
+              <div class="live-badge" aria-live="polite">
+                <span class="live-dot" aria-hidden="true"></span>
+                Live
+              </div>
+            </div>
+
+            <div class="chart-wrapper" role="img" aria-label="Real-time data center energy efficiency chart">
+              <canvas id="energyChart" aria-hidden="true"></canvas>
+            </div>
+
+            <div class="metric-tiles" role="list" aria-label="Current metrics">
+              <div class="metric-tile" role="listitem">
+                <div class="metric-num" id="metricPUE" style="color: var(--accent-lime);">1.24</div>
+                <div class="metric-unit">PUE</div>
+              </div>
+              <div class="metric-tile" role="listitem">
+                <div class="metric-num" id="metricCPU" style="color: var(--accent-teal);">68%</div>
+                <div class="metric-unit">CPU Load</div>
+              </div>
+              <div class="metric-tile" role="listitem">
+                <div class="metric-num" id="metricRenew" style="color: var(--accent-lime);">82%</div>
+                <div class="metric-unit">Renewable</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ROW 2: Tips Carousel + Eco Mode Panel -->
+      <div class="dashboard-grid">
+
+        <!-- Sustainability Tips -->
+        <section class="glass-card col-8" id="tips" aria-labelledby="tips-heading">
+          <div class="carousel-section" style="padding:0;">
+            <div class="section-label">AI-Generated Tips</div>
+            <h2 class="card-title" id="tips-heading">Green Computing Insights</h2>
+
+            <div class="carousel-track-wrapper">
+              <div class="carousel-track" id="carouselTrack" role="region" aria-label="Sustainability tips carousel" aria-live="polite">
+                <!-- Slides injected by JS -->
+              </div>
+            </div>
+
+            <div class="carousel-controls">
+              <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Carousel navigation"></div>
+              <div class="carousel-arrows">
+                <button class="carousel-arrow" id="prevBtn" aria-label="Previous tip">←</button>
+                <button class="carousel-arrow" id="nextBtn" aria-label="Next tip">→</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Eco Mode Panel -->
+        <section class="glass-card card-glow col-4" aria-labelledby="eco-heading">
+          <div class="section-label">Optimization</div>
+          <h2 class="card-title" id="eco-heading">Eco Mode</h2>
+
+          <div class="eco-panel">
+            <p class="eco-desc">
+              Activate Eco Mode to reduce UI rendering overhead—simulating how green software
+              minimizes unnecessary processing.
+            </p>
+
+            <ul class="eco-feature-list" aria-label="Eco mode features">
+              <li>
+                <span class="eco-check" aria-hidden="true" id="check1">○</span>
+                Disable particle animations
+              </li>
+              <li>
+                <span class="eco-check" aria-hidden="true" id="check2">○</span>
+                Reduce CSS transitions
+              </li>
+              <li>
+                <span class="eco-check" aria-hidden="true" id="check3">○</span>
+                Lower image rendering quality
+              </li>
+              <li>
+                <span class="eco-check" aria-hidden="true" id="check4">○</span>
+                Minimize background gradients
+              </li>
+            </ul>
+
+            <div class="savings-counter" aria-live="polite" aria-label="Estimated energy savings">
+              <div class="savings-num" id="savingsNum">0 Wh</div>
+              <div class="savings-label">Est. energy saved this session</div>
+            </div>
+
+            <!-- Duplicate toggle for panel -->
+            <label class="eco-toggle-nav" for="ecoTogglePanel" style="justify-content:center; margin-top:4px;" aria-label="Toggle Eco Mode">
+              <span style="font-size:0.9rem; font-weight:700; color: var(--white);">Toggle Eco Mode</span>
+              <div class="toggle-switch">
+                <input type="checkbox" id="ecoTogglePanel" role="switch" aria-checked="false" />
+                <div class="toggle-track">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- ROW 3: Status Cards -->
+      <div class="status-row" role="list" aria-label="System status overview">
+        <div class="status-card" role="listitem">
+          <div class="status-icon" aria-hidden="true">🌍</div>
+          <div class="status-val" style="color: var(--accent-lime);" id="sc1">12.4 kg</div>
+          <div class="status-name">CO₂ Offset Today</div>
+          <div class="status-trend trend-dn" aria-label="Trending down, good">▼ 8.2% vs yesterday</div>
+        </div>
+        <div class="status-card" role="listitem">
+          <div class="status-icon" aria-hidden="true">⚡</div>
+          <div class="status-val" style="color: var(--accent-teal);" id="sc2">847 kWh</div>
+          <div class="status-name">Energy Consumed</div>
+          <div class="status-trend trend-nt" aria-label="Stable">● Within target</div>
+        </div>
+        <div class="status-card" role="listitem">
+          <div class="status-icon" aria-hidden="true">🖥️</div>
+          <div class="status-val" style="color: var(--accent-amber);" id="sc3">1,204</div>
+          <div class="status-name">Active Servers</div>
+          <div class="status-trend trend-up" aria-label="Trending up, caution">▲ 3.1% peak load</div>
+        </div>
+        <div class="status-card" role="listitem">
+          <div class="status-icon" aria-hidden="true">🌱</div>
+          <div class="status-val" style="color: var(--accent-lime);" id="sc4">94%</div>
+          <div class="status-name">Green Score</div>
+          <div class="status-trend trend-dn" aria-label="Improving">▼ Improving (+2 pts)</div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <span>© 2025 GreenMind · AI Green Computing Platform</span>
+      <span>Powered by sustainable infrastructure · <a href="#">Learn more</a></span>
+    </footer>
+
+  </div><!-- /.app-wrapper -->
+
+  <script src="script.js"></script>
+</body>
+</html>
